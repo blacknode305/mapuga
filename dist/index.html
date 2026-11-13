@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8f5">
+  <meta name="description" content="Mapuga — выберите город, добавьте адреса и соберите автомобильный маршрут. Бесплатный HTML-прототип без регистрации.">
+  <title>Mapuga — все адреса, один маршрут</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="navigation.css">
+  <link rel="stylesheet" href="country-picker.css">
+  <script defer src="vendor/leaflet/leaflet.js"></script>
+  <script defer src="config.js"></script>
+  <script defer src="core.js"></script>
+  <script defer src="navigation.js"></script>
+  <script defer src="navigation-session.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H16a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8"/><path d="M6 8.5V15m9.5 3H10"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5m-5 5 5-5 5 5"/></symbol>
+    <symbol id="i-move-down" viewBox="0 0 24 24"><path d="M12 5v14m-5-5 5 5 5-5"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="m5 7 2-4h10l2 4 2 3v8H3v-8l2-3ZM5 7h14M3 12h18M6 18v3m12-3v3M6 15h2m8 0h2"/></symbol>
+    <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 15v6h16v-6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-11v1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></symbol>
+  </svg>
+
+  <header class="app-header">
+    <a class="brand" href="./" aria-label="Mapuga — главная">
+      <span class="brand-symbol"><svg class="icon"><use href="#i-route"/></svg></span>
+      <span>mapuga<span class="brand-dot">.</span></span>
+    </a>
+    <span class="header-caption">Меньше планов. Больше пути.</span>
+    <nav class="header-actions" aria-label="О приложении">
+      <a class="help-button" href="variants/index.html" style="text-decoration:none">API и расходы ↗</a>
+      <span class="free-badge"><span></span> Бесплатно, без регистрации</span>
+      <button class="help-button" id="help-button"><svg class="icon"><use href="#i-info"/></svg><span>Как это работает</span></button>
+    </nav>
+  </header>
+
+  <main class="workspace">
+    <aside class="planner" aria-label="Планировщик маршрута">
+      <div class="planner-scroll">
+        <div class="eyebrow"><span class="eyebrow-line"></span> ВАШ ПУТЬ НАЧИНАЕТСЯ ЗДЕСЬ</div>
+        <h1>Все адреса.<br> Один маршрут<span class="accent-dot">.</span></h1>
+        <p class="intro">Соберите нужные остановки.<br>А дорогу между ними найдёт Mapuga.</p>
+
+        <section class="location-section" aria-labelledby="location-heading">
+          <h2 id="location-heading" class="section-title"><span class="section-number">01</span> Выберите город</h2>
+          <div class="location-card">
+            <div class="country-field">
+              <label class="field-label" for="country">Страна</label>
+              <div class="country-input-row"><input id="country" type="text" role="combobox" aria-autocomplete="list" aria-controls="country-list" aria-expanded="false" autocomplete="off" spellcheck="false" placeholder="Введите страну"><button id="country-toggle" type="button" aria-label="Показать страны" aria-controls="country-list"><svg class="icon"><use href="#i-down"/></svg></button></div>
+              <div id="country-picker" class="country-picker" hidden><div id="country-list" role="listbox" aria-label="Подходящие страны"></div><p class="country-picker-note">Страны из текущего справочника Mapuga</p></div>
+            </div>
+            <div class="city-field">
+              <span class="field-label" id="city-label">Город</span>
+              <button id="city-button" class="city-button" aria-labelledby="city-label city-name" aria-haspopup="listbox" aria-expanded="false"><span id="city-name">Караганда</span><svg class="icon"><use href="#i-down"/></svg></button>
+              <div class="city-picker" id="city-picker" hidden>
+                <div class="city-search-wrap"><svg class="icon"><use href="#i-search"/></svg><input id="city-search" type="search" autocomplete="off" placeholder="Найти город" aria-label="Найти город" role="combobox" aria-expanded="true" aria-controls="city-list" aria-autocomplete="list"></div>
+                <div id="city-list" role="listbox" aria-label="Города"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="stops-section" aria-labelledby="stops-heading">
+          <div class="section-heading-row"><h2 id="stops-heading" class="section-title"><span class="section-number">02</span> Добавьте адреса</h2><button class="text-button clear-button" id="clear-button" disabled>Очистить</button></div>
+          <div class="stops-empty" id="stops-empty">
+            <div class="mini-route"><span class="mini-point first"></span><span class="mini-route-line"></span><svg class="icon"><use href="#i-pin"/></svg></div>
+            <div><strong>От первой точки до последней</strong><p>Первый адрес — старт.<br>Следующие — ваши остановки.</p></div>
+          </div>
+          <ol class="stops-list" id="stops-list" aria-label="Точки в порядке посещения"></ol>
+          <div class="search-section">
+            <label class="sr-only" for="address">Найти и добавить адрес</label>
+            <div class="address-field" id="address-field"><svg class="icon"><use href="#i-search"/></svg><input id="address" type="search" placeholder="Введите улицу и номер дома" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false" aria-describedby="search-hint"><span class="search-spinner" id="search-spinner" hidden></span></div>
+            <div class="suggestions-panel" id="suggestions-panel" hidden><div id="suggestions" role="listbox" aria-label="Найденные адреса"></div><div class="search-message" id="search-message" role="status"></div></div>
+            <p class="search-hint" id="search-hint">Подсказки появятся после 3 символов</p>
+          </div>
+          <button id="pick-button" class="pick-button"><svg class="icon"><use href="#i-plus"/></svg><span>Или выберите точку на карте</span></button>
+          <button id="gps-start-button" class="pick-button"><svg class="icon"><use href="#i-locate"/></svg><span>Добавить мою позицию в начало</span></button>
+        </section>
+
+        <div class="order-note"><svg class="icon"><use href="#i-route"/></svg><p>Остановки идут в порядке списка.<br>Меняйте порядок кнопками ↑ ↓.</p></div>
+        <div class="route-error" id="route-error" role="alert" hidden></div>
+        <div class="route-details" id="route-details" hidden>
+          <div class="details-heading"><span class="status-dot"></span><strong>Маршрут готов</strong><span class="driving-label">На автомобиле</span></div>
+          <p>Расчётное время без учёта пробок.</p>
+          <ol id="leg-list" class="leg-list"></ol>
+          <div class="navigation-controls">
+            <label class="voice-option"><input type="checkbox" id="voice-enabled" checked> Озвучивать повороты</label>
+            <button id="navigate-button" class="navigate-button" disabled><svg class="icon"><use href="#i-locate"/></svg> Начать навигацию</button>
+            <button id="demo-button" class="demo-button" disabled>Проверить без GPS · демо</button>
+            <p id="navigation-note">Держите вкладку открытой и экран включённым. Геолокация работает по HTTPS или на localhost.</p>
+          </div>
+          <button id="export-button" class="export-button"><svg class="icon"><use href="#i-download"/></svg> Скачать маршрут GPX</button>
+        </div>
+      </div>
+      <footer class="planner-footer">
+        <div class="route-meta"><span id="point-count">0 остановок</span><span><svg class="icon"><use href="#i-car"/></svg> Автомобиль</span></div>
+        <button id="build-button" class="build-button" disabled><span id="build-label">Построить маршрут</span><svg class="icon"><use href="#i-arrow"/></svg></button>
+        <p id="footer-hint">Добавьте начальную точку и хотя бы один адрес</p>
+      </footer>
+    </aside>
+
+    <section class="map-section" aria-label="Карта и маршрут">
+      <div id="map" role="region" aria-label="Интерактивная карта"></div>
+      <section id="navigation-card" class="navigation-card" aria-label="Подсказки навигации" hidden>
+        <div class="navigation-topline"><span id="navigation-mode">НАВИГАЦИЯ · GPS</span><button id="stop-navigation" aria-label="Остановить навигацию"><svg class="icon"><use href="#i-close"/></svg></button></div>
+        <div class="navigation-maneuver"><span id="navigation-symbol" aria-hidden="true">↑</span><div><span id="navigation-distance">Ожидаем позицию</span><strong id="navigation-instruction" role="status">Включаем геолокацию…</strong></div></div>
+        <p id="navigation-road"></p>
+        <div class="navigation-metrics"><span id="navigation-remaining"></span><span id="navigation-accuracy"></span></div>
+        <div class="navigation-actions"><button id="follow-position" aria-pressed="true">Следить за позицией</button><button id="continue-navigation" hidden>К следующей остановке →</button></div>
+      </section>
+      <div class="map-location"><span class="location-icon"><svg class="icon"><use href="#i-pin"/></svg></span><div><span class="map-location-label">СЕЙЧАС НА КАРТЕ</span><strong id="map-city">Караганда, Казахстан</strong></div><span class="live-dot"></span></div>
+      <div class="map-toolbar" aria-label="Управление картой">
+        <button id="fit-button" title="Показать весь маршрут" aria-label="Показать весь маршрут"><svg class="icon"><use href="#i-fit"/></svg></button>
+        <span></span>
+        <button id="zoom-in" title="Приблизить" aria-label="Приблизить">+</button>
+        <button id="zoom-out" title="Отдалить" aria-label="Отдалить">−</button>
+        <span></span>
+        <button id="locate-button" title="Моё местоположение" aria-label="Моё местоположение"><svg class="icon"><use href="#i-locate"/></svg></button>
+      </div>
+      <div class="map-pick-hint" id="map-pick-hint" hidden><svg class="icon"><use href="#i-pin"/></svg><span>Нажмите на карту, чтобы добавить остановку</span><button id="cancel-pick" aria-label="Отменить выбор точки"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="map-welcome" id="map-welcome">
+        <span class="welcome-icon"><svg class="icon"><use href="#i-route"/></svg></span>
+        <div><strong>Ваш город. Ваш маршрут.</strong><p>Добавляйте адреса слева — точки появятся здесь.</p></div>
+      </div>
+      <div class="map-summary" id="map-summary" hidden>
+        <div class="summary-icon"><svg class="icon"><use href="#i-car"/></svg></div>
+        <div><span>ВЕСЬ МАРШРУТ</span><strong id="summary-duration"></strong></div><div class="summary-divider"></div><div><span>РАССТОЯНИЕ</span><strong id="summary-distance"></strong></div>
+      </div>
+      <div class="map-unavailable" id="map-unavailable" hidden><svg class="icon"><use href="#i-globe"/></svg><strong>Карта пока недоступна</strong><p>Проверьте подключение к интернету.<br>Ваш список адресов сохранён.</p><button id="retry-map" class="small-button">Повторить загрузку</button></div>
+      <a class="map-issue" href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Сообщить об ошибке карты ↗</a>
+      <span class="prototype-badge">MAPUGA / БЕТА</span>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" hidden><span id="toast-text"></span><button id="undo-button" hidden>Отменить</button><button id="toast-close" aria-label="Закрыть уведомление"><svg class="icon"><use href="#i-close"/></svg></button></div>
+
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <button class="dialog-close" id="close-help" aria-label="Закрыть"><svg class="icon"><use href="#i-close"/></svg></button>
+    <span class="dialog-brand">mapuga<span>.</span></span>
+    <h2 id="help-title">Соберите день по адресам</h2>
+    <p class="dialog-intro">Простой планировщик автомобильных маршрутов. Бесплатно и без аккаунта.</p>
+    <ol class="help-steps"><li><span>01</span><div><strong>Выберите город</strong><p>Поиск ограничен областью вокруг выбранного города.</p></div></li><li><span>02</span><div><strong>Соберите остановки</strong><p>Начните вводить адрес и выберите подсказку. Можно поставить точку прямо на карте.</p></div></li><li><span>03</span><div><strong>Постройте маршрут</strong><p>Mapuga соединит остановки по дорогам в порядке списка. Старт можно изменить кнопками ↑ ↓.</p></div></li></ol>
+    <div class="help-note"><strong>Навигация по текущей позиции</strong><p>Постройте маршрут и нажмите «Начать навигацию». Разрешите геолокацию: Mapuga покажет позицию, расстояние до поворота и озвучит манёвр. На остановке нажмите «К следующей остановке». Демо работает без GPS.</p><p>Держите вкладку открытой и экран включённым. На телефоне нужен HTTPS. Нет учёта пробок, автоматического перестроения и гарантированной работы в фоне. Проверяйте подсказки по дорожным знакам.</p></div>
+    <p class="privacy-note">Список сохраняется в этом браузере. Поисковый запрос передаётся Photon, координаты маршрута — OSRM, запросы карты — OpenStreetMap. GPS сопоставляется с маршрутом на устройстве; его история не записывается. Озвучка использует голоса браузера или устройства. Публичные сервисы работают без гарантий доступности.</p>
+    <div class="provider-links"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap ↗</a><a href="https://github.com/komoot/photon" target="_blank" rel="noopener">Photon ↗</a><a href="https://project-osrm.org" target="_blank" rel="noopener">OSRM ↗</a></div>
+    <button id="start-planning" class="build-button">В путь<svg class="icon"><use href="#i-arrow"/></svg></button>
+  </dialog>
+  <noscript><div class="noscript">Для поиска адресов и построения маршрута включите JavaScript в браузере.</div></noscript>
+</body>
+</html>
